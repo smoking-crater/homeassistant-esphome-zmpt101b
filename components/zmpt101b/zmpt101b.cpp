@@ -8,7 +8,7 @@
 inline void cpu_yield_every(uint32_t &counter, uint32_t every) {
   if ((++counter % every) == 0) {
     // 0 ticks yields without a real delay; 1 tick is a tiny sleep (~1ms typical)
-    vTaskDelay(0);
+    vTaskDelay(1);
   }
 }
 
