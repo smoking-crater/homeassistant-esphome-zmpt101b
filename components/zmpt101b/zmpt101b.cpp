@@ -10,7 +10,7 @@ inline void cpu_yield_every(uint32_t &counter, uint32_t every) {
     // 0 ticks yields without a real delay; 1 tick is a tiny sleep (~1ms typical)
 	// Slower processors like an original ESP32 S3 (and WROOM) benefit from vTaskDelay(1), especially if running graphics.
     // otherwise, set to 0
-    vTaskDelay(1);
+    vTaskDelay(2);
   }
 }
 
@@ -29,7 +29,7 @@ int ZMPT101BSensor::getZeroPoint_() {
 		Vsum += adc_sensor_->sample() * ADC_SCALE;
 		measurements_count++;
 		//yield every x loops.  64 is a happy medium, 32 mayy cause extra noise but frees process.  128 will have the most accuracy at the cost of cpu
-		cpu_yield_every(yield_counter, 64);  // tune 32/64/128
+		cpu_yield_every(yield_counter, 32);  // tune 32/64/128
 	}
 
 	return measurements_count ? (Vsum / measurements_count) : 0;
