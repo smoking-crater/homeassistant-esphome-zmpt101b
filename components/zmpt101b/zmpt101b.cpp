@@ -2,18 +2,6 @@
 #include <cmath>
 #include "esphome/core/log.h"
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
-inline void cpu_yield_every(uint32_t &counter, uint32_t every) {
-  if ((++counter % every) == 0) {
-    // 0 ticks yields without a real delay; 1 tick is a tiny sleep (~1ms typical)
-	// Slower processors like an original ESP32 S3 (and WROOM) benefit from vTaskDelay(1), especially if running graphics.
-    // otherwise, set to 0
-    vTaskDelay(2);
-  }
-}
-
 namespace esphome {
 namespace zmpt101b {
 
@@ -23,13 +11,10 @@ int ZMPT101BSensor::getZeroPoint_() {
 	uint32_t Vsum = 0;
 	uint32_t measurements_count = 0;
 	uint32_t t_start = micros();
-	uint32_t yield_counter = 0;
 
 	while (micros() - t_start < this->period_) {
 		Vsum += adc_sensor_->sample() * ADC_SCALE;
 		measurements_count++;
-		//yield every x loops.  64 is a happy medium, 32 mayy cause extra noise but frees process.  128 will have the most accuracy at the cost of cpu
-		cpu_yield_every(yield_counter, 32);  // tune 32/64/128
 	}
 
 	return measurements_count ? (Vsum / measurements_count) : 0;
@@ -46,13 +31,10 @@ void ZMPT101BSensor::loop() {
 		uint32_t measurements_count = 0;
 
 		uint32_t t_start = micros();
-		uint32_t yield_counter = 0;
-		
 		while (micros() - t_start < this->period_) {
 			Vnow = (adc_sensor_->sample() * ADC_SCALE) - zeroPoint;
 			Vsum += Vnow * Vnow;
 			measurements_count++;
-			cpu_yield_every(yield_counter, 64);  // tune
 		}
 
 		double v_out_rms = sqrt((double)Vsum / (double)measurements_count) / ADC_SCALE * VREF;
